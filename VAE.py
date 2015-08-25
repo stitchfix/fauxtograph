@@ -102,45 +102,11 @@ class ImageAutoEncoder():
         kl_div /= (img_batch.shape[1] * img_batch.shape[0])
         return reconstruction_loss, kl_div, output
 
-    def gaussian_kl_divergence(self, mean, ln_var):
-        # TODO Just use a new version of chainer and use their KL Div
-        # no need to copy it verbatim here -- just remove this fun
-        """Calculate KL-divergence between given gaussian and the standard one.
-
-        Given two variable ``mean`` representing :math:`\\mu` and ``ln_var``
-        representing :math:`\\log(\\sigma^2)`, this function returns a variable
-        representing KL-divergence between given multi-dimensional gaussian
-        :math:`N(\\mu, S)` and the standard Gaussian :math:`N(0, I)`
-
-        .. math::
-
-            D_{\\mathbf{KL}}(N(\\mu, S) \\| N(0, I)),
-
-        where :math:`S` is a diagonal matrix such that :math:`S_{ii} =
-        \\sigma_i^2` and :math:`I` is an identity matrix.
-
-        Args:
-            mean (~chainer.Variable): A variable representing mean of given
-                gaussian distribution, :math:`\\mu`.
-            ln_var (~chainer.Variable): A variable representing logarithm of
-                variance of given gaussian distribution, :math:`\\log(\\sigma^2)`.
-
-        Returns:
-            ~chainer.Variable: A variable representing KL-divergence between
-                given gaussian distribution and the standard gaussian.
-
-        """
-        assert isinstance(mean, variable.Variable)
-        assert isinstance(ln_var, variable.Variable)
-        J = mean.data.size
-        var = F.exp(ln_var)
-        return (F.sum(mean * mean + var - ln_var) - J) * 0.5
-
     @mem.cache()
     def load_images(self, files, shape=(75, 100)):
         # TODO: docstring for all public functions
         # TODO: use logger instead of print
-        # TODO: The shape was defined at initialization, 
+        # TODO: The shape was defined at initialization,
         # shouldn't need to specify it here?
         # https://docs.python.org/2/library/logging.html
         print("Loading Image Files...")
