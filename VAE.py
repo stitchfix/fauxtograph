@@ -8,12 +8,8 @@ import time
 import joblib
 import json
 import os
-#import pickle
 from tqdm import *
 
-if not os.path.exists('cache'):
-    os.mkdir('cache')
-mem = joblib.Memory('cache')
 
 # TODO: unit test
 #   TODO: unit test for pickle / depickle, c/gpu
@@ -21,9 +17,6 @@ mem = joblib.Memory('cache')
 #   TODO: deccode / encode on an easy example
 # TODO: setup.py & PyPI Instllation
 # TODO: Downloader for images
-# TODO: docstrings for public functions
-# TODO: private funcs tend to have underscores
-# TODO: watch the 80 character limit
 
 
 class ImageAutoEncoder():
@@ -36,9 +29,10 @@ class ImageAutoEncoder():
 
     See  Kingma, Diederik and Welling, Max; "Auto-Encoding Variational Bayes" (2013)
 
-    Given a set of input images train an artificial neural network, respampling at the latent
-    stage from an approximate posterior multivariate gaussian distribution
-    with unit covariance with mean and variance trained by the encoding step.
+    Given a set of input images train an artificial neural network, respampling
+    at the latent stage from an approximate posterior multivariate gaussian
+    distribution with unit covariance with mean and variance trained by the
+    encoding step.
 
     Attributes
     ----------
@@ -57,6 +51,9 @@ class ImageAutoEncoder():
     img_length : int
         Total dimensionality of input image `img_length = img_width *
         img_height * color_channels`.
+    rec_kl_ratio : float
+            Ratio of relative importance between reconstruction loss and KL
+            Divergence terms.
     flag_gpu : bool
         Flag to toggle GPU training functionality.
     flag_dropout : bool
@@ -81,7 +78,7 @@ class ImageAutoEncoder():
     def __init__(self, img_width=75, img_height=100, color_channels=3,
                  encode_layers=[1000, 600, 300],
                  decode_layers=[300, 800, 1000],
-                 latent_width=100, flag_gpu=None, flag_dropout=False,
+                 latent_width=100, rec_kl_ratio=1.0, flag_gpu=None, flag_dropout=False,
                  flag_autocrop=False, flag_grayscale=False):
         '''Setup for the variational auto-encoder.
 
@@ -103,6 +100,9 @@ class ImageAutoEncoder():
             List of layer sizes for hiden linear decoding layers of the model.
         latent_width : int
             Dimension of latent encoding space.
+        rec_kl_ratio : float
+            Ratio of relative importance between reconstruction loss and KL
+            Divergence terms.
         flag_gpu : bool
             Flag to toggle GPU training functionality.
         flag_dropout : bool
@@ -124,6 +124,7 @@ class ImageAutoEncoder():
         else:
             self.color_channels = color_channels
         self.img_len = self.img_width*self.img_height*self.color_channels
+        self.rec_kl_ratio = rec_kl_ratio
         self.flag_gpu = flag_gpu
         self.flag_dropout = flag_dropout
         self.flag_autocrop = flag_autocrop
@@ -184,8 +185,8 @@ class ImageAutoEncoder():
         batch = F.sigmoid(getattr(self.model, 'decode_%i' % n_layers)(batch))
         return batch
 
-    def forward(self, img_batch):
-        # TODO: underscore this method if it isn't public
+    def _forward(self, img_batch):
+
         batch = chainer.Variable(img_batch / 255.)
         encoded = self._encode(batch)
 
@@ -209,10 +210,17 @@ class ImageAutoEncoder():
 
         return reconstruction_loss, kl_div, output
 
-    #@mem.cache
     def load_images(self, files):
+        '''Load in image files from list of paths.
 
-        # TODO: docstring for all public functions
+        Parameters
+        ----------
+
+        files : List[str]
+            List of file paths of images to be loaded.
+
+        '''
+
         # TODO: use logger instead of print
         # https://docs.python.org/2/library/logging.html
         shape = (self.img_width, self.img_height)
@@ -243,8 +251,22 @@ class ImageAutoEncoder():
         print("Image Files Loaded!")
 
     def fit(self, n_epochs=200, batch_size=100):
-        # TODO: docstring for all public functions
-        # TODO: rename to use sklearn's fit / predict / transform convention
+        '''Fit the VAE model to the image data.
+
+        Parameters
+        ----------
+
+        n_epochs [optional] : int
+            Gives the number of training epochs to run through for the fitting
+            process.
+        batch_size [optional] : int
+            The size of the batch to use when training. Note: generally larger
+            batch sizes will result in fater epoch iteration, but at the const
+            of lower granulatity when updating the layer weights.
+
+
+        '''
+
         if self.x_all.shape[0] == 0:
             raise ValueError('Images not yet loaded, call load_images() first.')
         n_samp = self.x_all.shape[0]
@@ -264,8 +286,8 @@ class ImageAutoEncoder():
                 else:
                     x_batch = x_train[indexes[i: i + batch_size]]
                 self.optimizer.zero_grads()
-                r_loss, kl_div, out = self.forward(x_batch)
-                loss = r_loss + kl_div
+                r_loss, kl_div, out = self._forward(x_batch)
+                loss = r_loss + kl_div*self.rec_kl_ratio
                 loss.backward()
                 self.optimizer.update()
                 last_loss_kl += kl_div.data
@@ -276,8 +298,80 @@ class ImageAutoEncoder():
             t_diff = time.time()-t1
             print("time: %f\n\n" % t_diff)
 
+    def transform(self, images, normalized=False):
+        '''Transform image data to latent space.
+
+        Parameters
+        ----------
+        images : array-like shape (n_images, image_width, image_height,
+                                   n_colors)
+            Input numpy array of images.
+        normalized [optional] : bool
+            Normalization flag that specifies whether pixel data is normalized
+            to a [0,1] scale.
+
+        Returns
+        -------
+
+        latent_vec : array-like shape (n_images, latent_dim)
+
+
+
+
+        '''
+
+        n_samp = images.shape[0]
+        x_encoding = images.flatten().reshape((n_samp, -1))
+        x_encoding = chainer.Variable(x_encoding)
+        if not normalized:
+            x_encoding /= 255.
+        x_encoded = self._encode(x_encoding)
+
+        mean, std = F.split_axis(x_encoded, 2, 1)
+
+        #create `latent_dim` N(0,1) normal samples.
+        samples = np.random.standard_normal(mean.data.shape).astype('float32')
+        if self.flag_gpu:
+            samples = cuda.to_gpu(samples)
+        samples = chainer.Variable(samples)
+
+        #Scale samples to model trained parameters.
+        sample_set = samples * F.exp(0.5*std) + mean
+
+        return sample_set.data
+
+    def inverse_transform(self, encoded, normalized=True):
+        '''Takes a latent space vector and transforms it into an image.
+
+        Parameters
+        ----------
+        images : array-like shape (n_images, image_width, image_height,
+                                   n_colors)
+            Input numpy array of images.
+        normalized [optional] : bool
+            Normalization flag that specifies whether pixel data is normalized
+            to a [0,1] scale.
+
+
+
+        '''
+        encoded = chainer.Variable(encoded)
+        output = self._decode(encoded)
+        return output.data.reshape((-1, self.img_height, self.img_width, 3))
+
     def dump(self, filepath):
-        # TODO: docstring for all public functions
+
+        '''Saves model as a sequence of files.
+
+        Parameters
+        ----------
+        filepath : str
+            The path of the file you wish to save the model to. Note: the
+            model will also contain files with paths '{filepath}_{number}.npy'
+            and '{filepath}_meta.json'.
+
+
+        '''
         if not os.path.exists(os.path.dirname(filepath)):
             os.makedirs(os.path.dirname(filepath))
         print("Dumping model to file: %s " % filepath)
@@ -293,7 +387,23 @@ class ImageAutoEncoder():
 
     @classmethod
     def load(cls, filepath, flag_gpu=False):
-        # TODO: docstring for all public functions
+
+        '''Loads in model as a class instance.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the first file that contains model information (will be
+            without the '_{number}.npy'  or '_meta.json' tags at the end)
+        flag_gpu : bool
+            Specifies whether to load the model to use gpu capabilities.
+
+        Returns
+        -------
+
+        class instance of self.
+
+        '''
         modpath = filepath
         metapath = filepath + '_meta.json'
 
