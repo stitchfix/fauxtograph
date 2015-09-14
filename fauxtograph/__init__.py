@@ -1,3 +1,3 @@
-from . import photona
+from . import fauxtograph
 
-ImageAutoEncoder = photona.ImageAutoEncoder
+ImageAutoEncoder = fauxtograph.ImageAutoEncoder
