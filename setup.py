@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='photona',
-    version='0.0.1',
+    version='0.0.7',
     author='TJ Torres',
     author_email='ttorres@mit.edu',
     license='MIT',
@@ -15,14 +15,16 @@ setup(
     url='https://github.com/stitchfix/photona',
     keywords=['autoencoder', 'images', 'deep learning', 'neaural networks', 'Chainer'],
     classifiers=[
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
     ],
     install_requires=[
-        'chainer',
-        'PIL',
-        'time',
+        'chainer==1.2.0',
+        'pillow',
         'joblib',
-        'json',
         'tqdm'
     ]
 )

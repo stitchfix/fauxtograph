@@ -15,8 +15,6 @@ from tqdm import *
 #   TODO: unit test for pickle / depickle, c/gpu
 #   TODO: test that before training the RMSE is as random as you'd expect
 #   TODO: deccode / encode on an easy example
-# TODO: setup.py & PyPI Instllation
-# TODO: Downloader for images
 
 
 class ImageAutoEncoder():
