@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='fauxtograph',
-    version='0.0.2',
+    version='0.0.6',
     author='TJ Torres',
     author_email='ttorres@mit.edu',
     license='MIT',
@@ -25,6 +25,14 @@ setup(
         'chainer==1.2.0',
         'pillow',
         'joblib',
-        'tqdm'
-    ]
+        'tqdm',
+        'BeautifulSoup',
+        'requests',
+        'numpy'
+    ],
+    entry_points={
+        'console_scripts': [
+            'fauxtograph = fauxtograph.fauxto:fauxtograph'
+        ],
+    },
 )
