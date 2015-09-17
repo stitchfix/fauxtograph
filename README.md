@@ -8,7 +8,7 @@ The model takes in a series of images and trains an auto-encoder to perform an e
 
 Both the module itself as well as the training script are available by installing this package through PyPI. Otherwise the module itself containing the main class which does all the heavy lifting is in  `fauxtograph/fauxtograph.py` while the training/generation CLI script is in `fauxtograph/fauxto.py`
 
-To learn more about its functionality and to get a better sense of how one might us it, please see the blog post on the Stitch Fix tech blog, [multithreaded](http://multithreaded.stitchfix.com/blog/2015/09/17/vizualizing-style-post/).
+To learn more about its functionality and to get a better sense of how one might us it, please see the blog post on the Stitch Fix tech blog, [multithreaded](http://multithreaded.stitchfix.com/blog/2015/09/17/deep-style/).
 
 
 
@@ -59,6 +59,8 @@ Each command comes with a `--help` option to see possible optional arguments.
 
 
 * If you have an CUDA capable Nvidia GPU, use it. The model can train over 10 times faster by taking advantage of GPU processing. 
+
+* Sometimes you will want to brighten your images when saving them, which can be done with the `--image_multiplier` argument. 
 
 * If you manage to train a particularly interesting model and generate some neat images, then we'd like to see them. Use #fauxtograph if you decide to put them up on social media.
 
