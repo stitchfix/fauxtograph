@@ -13,7 +13,8 @@ def fauxtograph():
 
 
 @click.command(help='Download Hubble Space Telescope Images')
-@click.argument('filedir', type=click.Path(resolve_path=False, file_okay=False, dir_okay=True))
+@click.argument('filedir', type=click.Path(resolve_path=False, file_okay=False,
+                                           dir_okay=True))
 def download(filedir):
     filepath = filedir
     if not filepath[-1] == '/':
@@ -25,7 +26,8 @@ def download(filedir):
 
             soup = BeautifulSoup(req.content)
             q = 0
-            for i, item in enumerate(soup.findAll('a', attrs={'class': 'item'})):
+            attrs = {'class': 'item'}
+            for i, item in enumerate(soup.findAll('a', attrs=attrs)):
                 q += 1
                 print (q, item.find('img')['src'])
                 try:
@@ -57,19 +59,27 @@ def download(filedir):
 
 
 @click.command(help='Train a Variational Auto-encoder')
-@click.argument('image_path', type=click.Path(resolve_path=False, file_okay=False, dir_okay=True))
-@click.argument('model_path', type=click.Path(resolve_path=False, file_okay=True, dir_okay=False))
-@click.option('--gpu', is_flag=True, help="Flag that determines whether or not to " +
-              "use the gpu")
-@click.option('--shape', default=(75, 100), type = (int, int), help="Image shape " +
-              "tuple for training (image_width, image_height).")
-@click.option('--latent_width', default=50, type=int, help="Width of the latent space.")
-@click.option('--color_channels', default=3, type=int, help="Number of colors.")
-@click.option('--batch', default=100, type=int, help="Number of images per training batch.")
-@click.option('--epoch', default=200, type=int, help="Number of epochs to train.")
-@click.option('--kl_ratio', default=1., type=float, help="Ratio of KL divergence term " +
-              "to reconstruction loss term.")
-def train(image_path, model_path, gpu, latent_width, color_channels, batch, epoch, shape, kl_ratio):
+@click.argument('image_path', type=click.Path(resolve_path=False,
+                                              file_okay=False, dir_okay=True))
+@click.argument('model_path', type=click.Path(resolve_path=False,
+                                              file_okay=True, dir_okay=False))
+@click.option('--gpu', is_flag=True, help="Flag that determines whether or"
+                                          "not to use the gpu")
+@click.option('--shape', default=(75, 100), type = (int, int),
+              help="Image shape tuple for training (image_width,"
+              "image_height).")
+@click.option('--latent_width', default=50, type=int,
+              help="Width of the latent space.")
+@click.option('--color_channels', default=3, type=int,
+              help="Number of colors.")
+@click.option('--batch', default=100, type=int,
+              help="Number of images per training batch.")
+@click.option('--epoch', default=200, type=int,
+              help="Number of epochs to train.")
+@click.option('--kl_ratio', default=1., type=float,
+              help="Ratio of KL divergence term to reconstruction loss term.")
+def train(image_path, model_path, gpu, latent_width, color_channels, batch,
+          epoch, shape, kl_ratio):
     if not image_path[-1] == '/':
         image_path += '/'
     if not os.path.exists(os.path.dirname(image_path)):
@@ -99,12 +109,18 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch, epoc
 
 
 @click.command(help='Generate images from a model.')
-@click.argument('model_path', type=click.Path(resolve_path=False, file_okay=True, dir_okay=False))
-@click.argument('img_dir', type=click.Path(resolve_path=False, file_okay=False, dir_okay=True))
-@click.option('--number', default=10, type=int, help="Number of images to generate.")
-@click.option('--extremity', default=10, type=float, help="Extremity of random encoded values.")
-@click.option('--mean', default=0, type=float, help="Mean of random encoded values.")
-@click.option('--format', default='jpg', type=click.Choice(['jpg', 'png']), help="Image format.")
+@click.argument('model_path', type=click.Path(resolve_path=False,
+                file_okay=True, dir_okay=False))
+@click.argument('img_dir', type=click.Path(resolve_path=False,
+                file_okay=False, dir_okay=True))
+@click.option('--number', default=10, type=int,
+              help="Number of images to generate.")
+@click.option('--extremity', default=10, type=float,
+              help="Extremity of random encoded values.")
+@click.option('--mean', default=0, type=float,
+              help="Mean of random encoded values.")
+@click.option('--format', default='jpg', type=click.Choice(['jpg', 'png']),
+              help="Image format.")
 def generate(model_path, img_dir, number, extremity, mean, format):
     click.echo("Loading Model...")
     model = ImageAutoEncoder.load(model_path)
