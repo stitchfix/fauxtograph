@@ -72,7 +72,7 @@ def download(filedir):
                                               file_okay=False, dir_okay=True))
 @click.argument('model_path', type=click.Path(resolve_path=False,
                                               file_okay=True, dir_okay=False))
-@click.option('--gpu', is_flag=True, help="Flag that determines whether or"
+@click.option('--gpu', is_flag=True, help="Flag that determines whether or "
                                           "not to use the gpu")
 @click.option('--shape', default=(75, 100), type = (int, int),
               help="Image shape tuple for training (image_width,"
@@ -130,7 +130,9 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch,
               help="Mean of random encoded values.")
 @click.option('--format', default='jpg', type=click.Choice(['jpg', 'png']),
               help="Image format.")
-def generate(model_path, img_dir, number, extremity, mean, format):
+@click.option('--image_multiplier', type=float, help="Multiplies pixes to  "
+                                          "increase/deacrese brightness.")
+def generate(model_path, img_dir, number, extremity, mean, format, image_multiplier):
     click.echo("Loading Model...")
     model = ImageAutoEncoder.load(model_path)
     click.echo("Model Loaded")
@@ -147,7 +149,7 @@ def generate(model_path, img_dir, number, extremity, mean, format):
 
     for i in range(number):
         im = reconstructed[i]
-        im = np.clip(im/im.max(), 0, 255)
+        im = np.clip(image_multiplier*im/im.max(), 0, 255)
         im = Image.fromarray(np.uint8(reconstructed[i]))
         fname = "{0}.{1}".format(i, format)
         path = os.path.join(img_dir, fname)

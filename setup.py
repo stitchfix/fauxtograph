@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='fauxtograph',
-    version='0.1.3',
+    version='0.1.7',
     author='TJ Torres',
     author_email='ttorres@mit.edu',
     license='MIT',
