@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import chainer
 from chainer import cuda
 import chainer.functions as F
