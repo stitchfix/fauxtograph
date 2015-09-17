@@ -1,8 +1,9 @@
 appnope==0.1.0
+BeautifulSoup==3.2.1
 chainer==1.2.0
 click==5.1
 decorator==4.0.2
-fauxtograph==0.0.2
+fauxtograph==0.1.0
 funcsigs==0.4
 gnureadline==6.3.3
 ipython==4.0.0
@@ -21,6 +22,7 @@ protobuf==2.6.1
 pyparsing==2.0.3
 python-dateutil==2.4.2
 pytz==2015.4
+requests==2.7.0
 simplegeneric==0.8.1
 six==1.9.0
 tqdm==1.0

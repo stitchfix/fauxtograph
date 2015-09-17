@@ -121,6 +121,8 @@ def generate(model_path, img_dir, number, extremity, mean, format):
     reconstructed = model.inverse_transform(vec)*255.
 
     for i in range(number):
+        im = reconstructed[i]
+        im = np.clip(im/im.max(), 0, 255)
         im = Image.fromarray(np.uint8(reconstructed[i]))
         fname = "{0}.{1}".format(i, format)
         path = os.path.join(img_dir, fname)
