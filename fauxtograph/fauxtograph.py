@@ -260,7 +260,7 @@ class ImageAutoEncoder():
             last_loss_kl = 0.
             last_loss_rec = 0.
             q = len(range(0, x_train.shape[0], batch_size))
-            for i in tqdm(xrange(0, x_train.shape[0], batch_size)):
+            for i in tqdm.tqdm(xrange(0, x_train.shape[0], batch_size)):
                 if self.flag_gpu:
                     x_batch = cuda.to_gpu(x_train[indexes[i: i + batch_size]])
                 else:
