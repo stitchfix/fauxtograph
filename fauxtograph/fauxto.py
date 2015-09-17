@@ -4,12 +4,52 @@ from BeautifulSoup import BeautifulSoup
 import requests as r
 import os
 import numpy as np
+import traceback
 from PIL import Image
 
 
-@click.group(help='Fauxtograph tools for training an image auto-encoder.')
-def fauxtograph():
-    pass
+urls = [
+'https://www.spacetelescope.org/images/archive/category/galaxies/page/{0}/',
+'https://www.spacetelescope.org/images/archive/category/starclusters/page/{0}/',
+'https://www.spacetelescope.org/images/archive/category/nebulae/page/{0}/']
+
+pages = [25, 5, 12]
+
+
+def try_except_none(func):
+    def wrapper(*args):
+        try:
+            return func(*args)
+        except:
+            print(func, args)
+            print(traceback.format_exc())
+            return None
+    return wrapper
+
+
+@try_except_none
+def download_image(item):
+    img_data = r.get(item.find('img')['src'])
+    return img_data
+
+
+@try_except_none
+def download_page(filepath, url, pic_type, page):
+    try:
+        req = r.get(url)
+    except:
+        return None
+    soup = BeautifulSoup(req.content)
+    attrs = {'class': 'item'}
+    for i, item in enumerate(soup.findAll('a', attrs=attrs)):
+        print (i, item.find('img')['src'])
+        img_data = download_image(item)
+        if img_data is not None and img_data.status_code == 200:
+            img = img_data.content
+            numb_str = '{0}{1}_{2}.jpg'.format(pic_type, page, i)
+            path = os.path.join(filepath, numb_str)
+            with open(path, 'w') as f:
+                f.write(img)
 
 
 @click.command(help='Download Hubble Space Telescope Images')
@@ -22,40 +62,9 @@ def download(filedir):
     if not os.path.exists(os.path.dirname(filepath)):
             os.makedirs(os.path.dirname(filepath))
 
-    def getter(filepath, req, pic_type, page):
-
-            soup = BeautifulSoup(req.content)
-            q = 0
-            attrs = {'class': 'item'}
-            for i, item in enumerate(soup.findAll('a', attrs=attrs)):
-                q += 1
-                print (q, item.find('img')['src'])
-                try:
-                    img_data = r.get(item.find('img')['src'])
-                    if img_data.status_code == 200:
-                        img = img_data.content
-                        numb_str = '{0}{1}_{2}.jpg'.format(pic_type, page, q)
-                        path = os.path.join(filepath, numb_str)
-                        with open(path, 'w') as f:
-                            f.write(img)
-                except:
-                    pass
-    for j in range(25):
-        req = r.get('https://www.spacetelescope.org/images/' +
-                    'archive/category/galaxies/page/{0}/'
-                    .format(j+1))
-        getter(filepath, req, 'galaxies', j+1)
-
-    for j in range(5):
-        req = r.get('https://www.spacetelescope.org/images/' +
-                    'archive/category/starclusters/page/{0}/'
-                    .format(j+1))
-        getter(filepath, req, 'starclusters', j+1)
-    for j in range(12):
-        req = r.get('https://www.spacetelescope.org/images/' +
-                    'archive/category/nebulae/page/{0}/'
-                    .format(j+1))
-        getter(filepath, req, 'nebulae', j+1)
+    for max_page, url in zip(pages, urls):
+        for page in range(1, max_page):
+            download_page(filepath, url.format(page), 'galaxies', page)
 
 
 @click.command(help='Train a Variational Auto-encoder')
@@ -85,7 +94,7 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch,
     if not os.path.exists(os.path.dirname(image_path)):
             os.makedirs(os.path.dirname(image_path))
     if model_path[-1] == '/':
-        click.echo("Model Path should be a file path not a directory path. " +
+        click.echo("Model Path should be a file path not a directory path. "
                    "Removing trailing '/' ...")
         model_path = model_path[:-1]
 
@@ -134,13 +143,18 @@ def generate(model_path, img_dir, number, extremity, mean, format):
     vec = np.random.normal(mean, variance,
                            (number, model.latent_dim)).astype('float32')
 
-    reconstructed = model.inverse_transform(vec)*255.
+    reconstructed = model.inverse_transform(vec) * 255.0
 
     for i in range(number):
         im = Image.fromarray(np.uint8(reconstructed[i]))
         fname = "{0}.{1}".format(i, format)
         path = os.path.join(img_dir, fname)
         im.save(path)
+
+
+@click.group(help='Fauxtograph tools for training an image auto-encoder.')
+def fauxtograph():
+    pass
 
 
 fauxtograph.add_command(download)

@@ -130,10 +130,8 @@ class ImageAutoEncoder():
         self.x_all = np.array([], dtype=np.float32)
 
     def _layer_setup(self):
-        # setup chainer layers for NN.
-
+        # Setup chainer layers for NN.
         layers = {}
-
         # Encoding Steps
         encode_layer_pairs = [(self.img_len, self.encode_sizes[0])]
         encode_layer_pairs += zip(self.encode_sizes[:-1],
@@ -141,21 +139,17 @@ class ImageAutoEncoder():
         encode_layer_pairs += [(self.encode_sizes[-1], self.latent_dim * 2)]
         for i, (n_in, n_out) in enumerate(encode_layer_pairs):
             layers['encode_%i' % i] = F.Linear(n_in, n_out)
-
         # Decoding Steps
         decode_layer_pairs = [(self.latent_dim, self.decode_sizes[0])]
         decode_layer_pairs += zip(self.decode_sizes[:-1],
                                   self.decode_sizes[1:])
         decode_layer_pairs += [(self.decode_sizes[-1], self.img_len)]
-
         for i, (n_in, n_out) in enumerate(decode_layer_pairs):
             layers['decode_%i' % i] = F.Linear(n_in, n_out)
         model = chainer.FunctionSet(**layers)
-
         if self.flag_gpu:
             cuda.init()
             model.to_gpu()
-
         return model
 
     def _encode(self, img_batch):
