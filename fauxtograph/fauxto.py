@@ -130,7 +130,7 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch,
               help="Mean of random encoded values.")
 @click.option('--format', default='jpg', type=click.Choice(['jpg', 'png']),
               help="Image format.")
-@click.option('--image_multiplier', type=float, help="Multiplies pixes to  "
+@click.option('--image_multiplier', default=1.0, type=float, help="Multiplies pixes to  "
                                           "increase/deacrese brightness.")
 def generate(model_path, img_dir, number, extremity, mean, format, image_multiplier):
     click.echo("Loading Model...")
