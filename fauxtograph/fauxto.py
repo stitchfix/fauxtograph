@@ -150,7 +150,7 @@ def generate(model_path, img_dir, number, extremity, mean, format, image_multipl
     for i in range(number):
         im = reconstructed[i]
         im = np.clip(image_multiplier*im/im.max(), 0, 255)
-        im = Image.fromarray(np.uint8(reconstructed[i]))
+        im = Image.fromarray(np.uint8(np.squeeze(im)))
         fname = "{0}.{1}".format(i, format)
         path = os.path.join(img_dir, fname)
         im.save(path)
