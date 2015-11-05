@@ -327,7 +327,7 @@ class ImageAutoEncoder():
         '''
         encoded = chainer.Variable(encoded)
         output = self._decode(encoded)
-        return output.data.reshape((-1, self.img_height, self.img_width, 3))
+        return output.data.reshape((-1, self.img_height, self.img_width, self.color_channels))
 
     def dump(self, filepath):
         '''Saves model as a sequence of files.
