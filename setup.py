@@ -26,7 +26,7 @@ setup(
         'pillow',
         'joblib',
         'tqdm',
-        'BeautifulSoup',
+        'BeautifulSoup4',
         'requests',
         'numpy',
         'click>=5.0'
