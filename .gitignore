@@ -1,1 +1,11 @@
 .DS_Store
+.gitignore
+build/
+dist/
+
+fauxtograph/__pycache__/
+fauxtograph.egg-info/
+
+fauxtograph/data/
+fauxtograph/model/
+fauxtograph/output/

@@ -135,15 +135,15 @@ class ImageAutoEncoder():
         layers = {}
         # Encoding Steps
         encode_layer_pairs = [(self.img_len, self.encode_sizes[0])]
-        encode_layer_pairs += zip(self.encode_sizes[:-1],
-                                  self.encode_sizes[1:])
+        encode_layer_pairs += list(zip(self.encode_sizes[:-1],
+                                  self.encode_sizes[1:]))
         encode_layer_pairs += [(self.encode_sizes[-1], self.latent_dim * 2)]
         for i, (n_in, n_out) in enumerate(encode_layer_pairs):
             layers['encode_%i' % i] = F.Linear(n_in, n_out)
         # Decoding Steps
         decode_layer_pairs = [(self.latent_dim, self.decode_sizes[0])]
-        decode_layer_pairs += zip(self.decode_sizes[:-1],
-                                  self.decode_sizes[1:])
+        decode_layer_pairs += list(zip(self.decode_sizes[:-1],
+                                  self.decode_sizes[1:]))
         decode_layer_pairs += [(self.decode_sizes[-1], self.img_len)]
         for i, (n_in, n_out) in enumerate(decode_layer_pairs):
             layers['decode_%i' % i] = F.Linear(n_in, n_out)
@@ -158,7 +158,7 @@ class ImageAutoEncoder():
         if self.flag_dropout:
             batch = F.dropout(batch)
         n_layers = len(self.encode_sizes)
-        for i in xrange(n_layers):
+        for i in range(n_layers):
             batch = F.relu(getattr(self.model, 'encode_%i' % i)(batch))
         batch = F.relu(getattr(self.model, 'encode_%i' % n_layers)(batch))
         return batch
@@ -166,7 +166,7 @@ class ImageAutoEncoder():
     def _decode(self, latent_vec):
         batch = latent_vec
         n_layers = len(self.decode_sizes)
-        for i in xrange(n_layers):
+        for i in range(n_layers):
             batch = F.relu(getattr(self.model, 'decode_%i' % i)(batch))
         batch = F.sigmoid(getattr(self.model, 'decode_%i' % n_layers)(batch))
         return batch
@@ -253,14 +253,14 @@ class ImageAutoEncoder():
         x_train = self.x_all.flatten().reshape((n_samp, -1))
         # Train Model
         print("\n Training for %i epochs. \n" % n_epochs)
-        for epoch in xrange(1, n_epochs + 1):
+        for epoch in range(1, n_epochs + 1):
             print('epoch: %i' % epoch)
             t1 = time.time()
             indexes = np.random.permutation(x_train.shape[0])
             last_loss_kl = 0.
             last_loss_rec = 0.
-            q = len(range(0, x_train.shape[0], batch_size))
-            for i in tqdm.tqdm(xrange(0, x_train.shape[0], batch_size)):
+            q = len(list(range(0, x_train.shape[0], batch_size)))
+            for i in tqdm.tqdm(range(0, x_train.shape[0], batch_size)):
                 if self.flag_gpu:
                     x_batch = cuda.to_gpu(x_train[indexes[i: i + batch_size]])
                 else:
@@ -349,7 +349,7 @@ class ImageAutoEncoder():
         cls_data.pop('optimizer')
         cls_data.pop('x_all')
         meta = json.dumps(cls_data)
-        with open(filepath+'_meta.json', 'wb') as f:
+        with open(filepath+'_meta.json', 'w') as f:
             f.write(meta)
         joblib.dump(model, filepath)
 

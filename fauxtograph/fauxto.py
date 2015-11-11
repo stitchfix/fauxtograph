@@ -1,6 +1,6 @@
 import click
 from fauxtograph import ImageAutoEncoder
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 import requests as r
 import os
 import numpy as np
@@ -42,13 +42,13 @@ def download_page(filepath, url, pic_type, page):
     soup = BeautifulSoup(req.content)
     attrs = {'class': 'item'}
     for i, item in enumerate(soup.findAll('a', attrs=attrs)):
-        print (i, item.find('img')['src'])
+        print(i, item.find('img')['src'])
         img_data = download_image(item)
         if img_data is not None and img_data.status_code == 200:
             img = img_data.content
             numb_str = '{0}{1}_{2}.jpg'.format(pic_type, page, i)
             path = os.path.join(filepath, numb_str)
-            with open(path, 'w') as f:
+            with open(path, 'wb') as f:
                 f.write(img)
 
 
@@ -113,8 +113,11 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch,
                            color_channels=color_channels)
 
     iae.load_images(file_paths)
-    iae.fit(batch_size=batch, n_epochs=epoch)
-    iae.dump(model_path)
+    try:
+        iae.fit(batch_size=batch, n_epochs=epoch)
+    finally:
+        print("saving to ", model_path)
+        iae.dump(model_path)
 
 
 @click.command(help='Generate images from a model.')
@@ -132,6 +135,9 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch,
               help="Image format.")
 @click.option('--image_multiplier', default=1.0, type=float, help="Multiplies pixes to  "
                                           "increase/deacrese brightness.")
+
+#@click.option('--normalize', default=False,
+#              help="Normalize images")
 def generate(model_path, img_dir, number, extremity, mean, format, image_multiplier):
     click.echo("Loading Model...")
     model = ImageAutoEncoder.load(model_path)
@@ -149,7 +155,8 @@ def generate(model_path, img_dir, number, extremity, mean, format, image_multipl
 
     for i in range(number):
         im = reconstructed[i]
-        im = np.clip(image_multiplier*im/im.max(), 0, 255)
+        im = np.clip(image_multiplier*255*im/im.max(), 0, 255)
+        print( "in image %u:\tmean=%.2f\tstd=%.2f" % (i, im.mean(), im.std() ) )
         im = Image.fromarray(np.uint8(np.squeeze(im)))
         fname = "{0}.{1}".format(i, format)
         path = os.path.join(img_dir, fname)
