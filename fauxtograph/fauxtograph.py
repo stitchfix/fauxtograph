@@ -490,7 +490,7 @@ class ImageAutoEncoder():
             encoded = cuda.cupy.asarray(encoded)
         encoded = chainer.Variable(encoded)
         output = self._decode(encoded)
-        cuda.to_cpu(output)
+        output = cuda.to_cpu(output.data)
         if self.flag_conv:
             return output.data.transpose(0, 2, 3, 1)
         else:

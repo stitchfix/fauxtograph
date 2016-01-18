@@ -22,7 +22,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     install_requires=[
-        'chainer==1.2.0',
+        'chainer>=1.2.0',
         'pillow',
         'joblib',
         'tqdm',
