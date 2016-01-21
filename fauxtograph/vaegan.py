@@ -1,5 +1,6 @@
 import chainer.functions as F
 import chainer.links as L
+from chainer import Variable
 import chainer
 import numpy as np
 
@@ -7,8 +8,8 @@ import numpy as np
 class Encoder(chainer.Chain):
     def __init__(
         self,
-        img_width=75,
-        img_height=100,
+        img_width=64,
+        img_height=64,
         color_channels=3,
         encode_layers=[1000, 600, 300],
         latent_width=100,
@@ -42,9 +43,9 @@ class Encoder(chainer.Chain):
             self._layers['bn4'] = L.BatchNormalization(256)
             self._layers['bn5'] = L.BatchNormalization(512)
             self._layers['bn6'] = L.BatchNormalization(self.latent_width*2)
-            self.img_len = reduce(lambda x, y: x*y, _calc_fc_size(self.img_height, self.img_width))
-            self.img_width, self.img_height = _calc_fc_size(self.img_height, self.img_width)[1:]
-            self.img_width, self.img_height = _calc_im_size(self.img_height, self.img_width)
+            self.img_len = reduce(lambda x, y: x*y, calc_fc_size(self.img_height, self.img_width))
+            self.img_width, self.img_height = calc_fc_size(self.img_height, self.img_width)[1:]
+            self.img_width, self.img_height = calc_im_size(self.img_height, self.img_width)
             self._layers['lin'] = L.Linear(self.img_len, 2*self.latent_width)
         elif self.mode == 'linear':
             # Encoding Steps
@@ -111,8 +112,8 @@ class Encoder(chainer.Chain):
 class Decoder(chainer.Chain):
     def __init__(
         self,
-        img_width=75,
-        img_height=100,
+        img_width=64,
+        img_height=64,
         color_channels=3,
         decode_layers=[300, 600, 1000],
         latent_width=100,
@@ -127,14 +128,12 @@ class Decoder(chainer.Chain):
 
         self.img_len = self.img_width*self.img_height*self.color_channels
 
-        if self.mode == 'convolution':
-            self.img_len = reduce(lambda x, y: x*y, _calc_fc_size(self.img_height, self.img_width))
-            self.img_width, self.img_height = _calc_fc_size(self.img_height, self.img_width)[1:]
-            self.img_width, self.img_height = _calc_im_size(self.img_height, self.img_width)
-
         self._layers = {}
 
         if self.mode == 'convolution':
+            self.img_len = reduce(lambda x, y: x*y, calc_fc_size(self.img_height, self.img_width))
+            self.img_width, self.img_height = calc_fc_size(self.img_height, self.img_width)[1:]
+            self.img_width, self.img_height = calc_im_size(self.img_height, self.img_width)
 
             self._layers['lin'] = L.Linear(self.latent_width, self.img_len, wscale=0.02*np.sqrt(self.latent_width))
             self._layers['deconv5'] = L.Deconvolution2D(512, 256, 4, stride=2, pad=1, wscale=0.02*np.sqrt(4*4*512))
@@ -178,7 +177,7 @@ class Decoder(chainer.Chain):
         if self.mode == 'convolution':
             batch = F.relu(self.bn6(self.lin(z), test=test))
             n_pics = batch.data.shape[0]
-            start_array_shape = (n_pics,) + _calc_fc_size(self.img_height, self.img_width)
+            start_array_shape = (n_pics,) + calc_fc_size(self.img_height, self.img_width)
             batch = F.reshape(batch, start_array_shape)
             batch = F.relu(self.bn5(self.deconv5(batch), test=test))
             batch = F.relu(self.bn4(self.deconv4(batch), test=test))
@@ -195,7 +194,7 @@ class Decoder(chainer.Chain):
         if rectifier == 'clipped_relu':
             batch = F.clipped_relu(batch, z=1.0)
         elif rectifier == 'sigmoid':
-            batch = F.sigmoid(batch, z=1.0)
+            batch = F.sigmoid(batch)
         else:
             raise NameError(
                 "Unsupported rectifier type: %s, must be either 'sigmoid' or 'clipped_relu'."
@@ -207,8 +206,8 @@ class Decoder(chainer.Chain):
 class Discriminator(chainer.Chain):
     def __init__(
         self,
-        img_width=75,
-        img_height=100,
+        img_width=64,
+        img_height=64,
         color_channels=3,
         disc_layers=[1000, 600, 300],
         latent_width=100,
@@ -239,9 +238,9 @@ class Discriminator(chainer.Chain):
             self._layers['bn3'] = L.BatchNormalization(128)
             self._layers['bn4'] = L.BatchNormalization(256)
             self._layers['bn5'] = L.BatchNormalization(512)
-            self.img_len = reduce(lambda x, y: x*y, _calc_fc_size(self.img_height, self.img_width))
-            self.img_width, self.img_height = _calc_fc_size(self.img_height, self.img_width)[1:]
-            self.img_width, self.img_height = _calc_im_size(self.img_height, self.img_width)
+            self.img_len = reduce(lambda x, y: x*y, calc_fc_size(self.img_height, self.img_width))
+            self.img_width, self.img_height = calc_fc_size(self.img_height, self.img_width)[1:]
+            self.img_width, self.img_height = calc_im_size(self.img_height, self.img_width)
             self._layers['lin'] = L.Linear(self.img_len, 2)
         elif self.mode == 'linear':
             # Encoding Steps
@@ -309,7 +308,67 @@ class Discriminator(chainer.Chain):
         return batch, batch_out
 
 
-def _calc_fc_size(img_height, img_width):
+class EncDec(chainer.Chain):
+    def __init__(
+        self,
+        img_width=64,
+        img_height=64,
+        color_channels=3,
+        encode_layers=[1000, 600, 300],
+        decode_layers=[300, 600, 1000],
+        latent_width=100,
+        mode='convolution',
+        flag_gpu=True,
+        rectifier='clipped_relu'
+    ):
+        self.flag_gpu = flag_gpu
+        self.rectifier = rectifier
+        super(EncDec, self).__init__(
+            enc=Encoder(img_width=img_width,
+                        img_height=img_height,
+                        encode_layers=encode_layers,
+                        latent_width=latent_width,
+                        mode=mode),
+            dec=Decoder(img_width=img_width,
+                        img_height=img_height,
+                        decode_layers=decode_layers,
+                        latent_width=latent_width,
+                        mode=mode)
+        )
+
+    def encode(self, data, test=False):
+        x = self.enc(data, test=test)
+        mean, ln_var = F.split_axis(x, 2, 1)
+        samp = np.random.standard_normal(mean.data.shape).astype('float32')
+        samp = Variable(samp)
+        if self.flag_gpu:
+            samp.to_gpu()
+        z = samp * F.exp(0.5*ln_var) + mean
+
+        return z, mean, ln_var
+
+    def decode(self, z, test=False):
+        x = self.dec(z, test=test, rectifier=self.rectifier)
+
+        return x
+
+    def forward(self, batch, test=False):
+
+        out, means, ln_vars = self.encode(batch, test=test)
+        out = self.decode(out, test=test)
+        normer = reduce(lambda x, y: x*y, means.data.shape)
+
+        kl_loss = F.gaussian_kl_divergence(means, ln_vars)/normer
+        rec_loss = F.mean_squared_error(batch, out)
+
+        return out, kl_loss, rec_loss
+
+    def __call__(self, x):
+
+        return self.forward(x)
+
+
+def calc_fc_size(img_height, img_width):
     height, width = img_height, img_width
     for _ in range(5):
         height, width = _get_conv_outsize(
@@ -320,7 +379,7 @@ def _calc_fc_size(img_height, img_width):
     return conv_out_layers, height, width
 
 
-def _calc_im_size(img_height, img_width):
+def calc_im_size(img_height, img_width):
     height, width = img_height, img_width
     for _ in range(5):
         height, width = _get_deconv_outsize((height, width),
