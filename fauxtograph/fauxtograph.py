@@ -210,7 +210,12 @@ class VAE(object):
 
         out.to_cpu()
 
-        return out.data.transpose(0, 2, 3, 1)
+        if self.mode == 'linear':
+            final = out.data
+        else:
+            final = out.data.transpose(0, 2, 3, 1)
+
+        return final
 
     def load_images(self, filepaths):
         '''Load in image files from list of paths.

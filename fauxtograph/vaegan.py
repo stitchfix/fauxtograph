@@ -6,6 +6,51 @@ import numpy as np
 
 
 class Encoder(chainer.Chain):
+    '''Chainer encoder chain that has optional linear or convolutional
+    structure.
+
+    In convolutional mode, the encoder performs the folowing:
+
+        Convolution: 32, 4x4, stride 2, pad 1
+        Batch Normalization: 32
+        Relu
+        Convolution: 64, 4x4, stride 2, pad 1
+        Batch Normalization: 64
+        Relu
+        Convolution: 128, 4x4, stride 2, pad 1
+        Batch Normalization: 128
+        Relu
+        Convolution: 256, 4x4, stride 2, pad 1
+        Batch Normalization: 256
+        Relu
+        Convolution: 512, 4x4, stride 2, pad 1
+        Batch Normalization: 512
+        Relu
+        Linear (convolution_width, 2*latent_width)
+        Batch Normalization: 2*latent_width
+        Relu
+
+
+    In linear mode the encoder passes forward through fully-connected linear
+    transformations layers with sizes given by the encode_layers attribute.
+
+    Attributes
+    ----------
+    encode_layers : List[int]
+        List of layer sizes for hidden linear encoding layers of the model.
+        Only taken into account when mode='linear'.
+    latent_width : int
+        Dimension of latent encoding space.
+    img_width : int
+        Width of the desired image representation.
+    img_height : int
+        Height of the desired image representation.
+    color_channels : int
+        Number of color channels in the input images.
+    mode: str
+        Mode to set the encoder architectures. Can be either
+        'convolution' or 'linear'.
+    '''
     def __init__(
         self,
         img_width=64,
@@ -15,6 +60,7 @@ class Encoder(chainer.Chain):
         latent_width=100,
         mode='convolution',
     ):
+
         self.img_width = img_width
         self.img_height = img_height
         self.color_channels = color_channels
@@ -110,6 +156,49 @@ class Encoder(chainer.Chain):
 
 
 class Decoder(chainer.Chain):
+    '''Chainer decoder chain that has optional linear or convolutional
+    structure.
+
+    In convolutional mode, the encoder performs the folowing:
+
+        Linear (latent_width, convolution_width)
+        Batch Normalization: convolution_width
+        Deconvolution: 256, 4x4, stride 2, pad 1
+        Batch Normalization: 256
+        Relu
+        Deconvolution: 128, 4x4, stride 2, pad 1
+        Batch Normalization: 128
+        Relu
+        Deconvolution: 64, 4x4, stride 2, pad 1
+        Batch Normalization: 64
+        Relu
+        Deconvolution: 32, 4x4, stride 2, pad 1
+        Batch Normalization: 32
+        Relu
+        Deconvolution: 3, 4x4, stride 2, pad 1
+        Batch Normalization: 3
+        Selectable: Clipped Relu or Sigmoid
+
+    In linear mode the decoder passes forward through fully-connected linear
+    transformations layers with sizes given by the decode_layers attribute.
+
+    Attributes
+    ----------
+    decode_layers : List[int]
+        List of layer sizes for hidden linear encoding layers of the model.
+        Only taken into account when mode='linear'.
+    latent_width : int
+        Dimension of latent encoding space.
+    img_width : int
+        Width of the desired image representation.
+    img_height : int
+        Height of the desired image representation.
+    color_channels : int
+        Number of color channels in the input images.
+    mode: str
+        Mode to set the encoder architectures. Can be either
+        'convolution' or 'linear'.
+    '''
     def __init__(
         self,
         img_width=64,
@@ -190,7 +279,7 @@ class Decoder(chainer.Chain):
             for i in range(n_layers):
                 batch = F.relu(getattr(self, 'linear_%i' % i)(batch))
             batch = F.relu(getattr(self, 'linear_%i' % n_layers)(batch))
-            batch = F.reshape(batch, (-1,self.img_height, self.img_width, self.color_channels))
+            batch = F.reshape(batch, (-1, self.img_height, self.img_width, self.color_channels))
         if rectifier == 'clipped_relu':
             batch = F.clipped_relu(batch, z=1.0)
         elif rectifier == 'sigmoid':
@@ -204,6 +293,52 @@ class Decoder(chainer.Chain):
 
 
 class Discriminator(chainer.Chain):
+    '''Chainer discriminator chain that has optional linear or convolutional
+    structure. It outputs an activation at the 3rd convolution layer as well
+    as the discriminator 2d output (prior to softmax).
+
+    In convolutional mode, the discriminator performs the folowing:
+
+        Convolution: 32, 4x4, stride 2, pad 1
+        Relu
+        Convolution: 64, 4x4, stride 2, pad 1
+        Batch Normalization: 64
+        Relu
+        Convolution: 128, 4x4, stride 2, pad 1 : Activation Output
+        Batch Normalization: 128
+        Relu
+        Dropout
+        Convolution: 256, 4x4, stride 2, pad 1
+        Batch Normalization: 256
+        Relu
+        Dropout
+        Convolution: 512, 4x4, stride 2, pad 1
+        Batch Normalization: 512
+        Relu
+        Dropout
+        Linear (convolution_width, 2)
+        Relu
+
+    In linear mode the discriminator passes forward through fully-connected linear
+    transformations layers with sizes given by the disc_layers attribute.
+
+    Attributes
+    ----------
+    disc_layers : List[int]
+        List of layer sizes for hidden linear discriminator layers of the model.
+        Only taken into account when mode='linear'.
+    latent_width : int
+        Dimension of latent encoding space.
+    img_width : int
+        Width of the desired image representation.
+    img_height : int
+        Height of the desired image representation.
+    color_channels : int
+        Number of color channels in the input images.
+    mode: str
+        Mode to set the encoder architectures. Can be either
+        'convolution' or 'linear'.
+    '''
     def __init__(
         self,
         img_width=64,
@@ -309,6 +444,38 @@ class Discriminator(chainer.Chain):
 
 
 class EncDec(chainer.Chain):
+    '''A combination of the fauxtograph.Encoder and fauxtograph.Decoder
+    chains. These two chains need to be combined to avoid two optimizers
+    with the Variational Auto-encoder.
+
+    In linear mode the encoder/decoder pass forward through fully-connected linear
+    transformations layers with sizes given by the encode/decode_layers attribute.
+
+    Attributes
+    ----------
+    encode_layers : List[int]
+        List of layer sizes for hidden linear encoding layers of the model.
+        Only taken into account when mode='linear'.
+    decode_layers : List[int]
+        List of layer sizes for hidden linear decoding layers of the model.
+        Only taken into account when mode='linear'.
+    latent_width : int
+        Dimension of latent encoding space.
+    img_width : int
+        Width of the desired image representation.
+    img_height : int
+        Height of the desired image representation.
+    color_channels : int
+        Number of color channels in the input images.
+    mode : str
+        Mode to set the encoder architectures. Can be either
+        'convolution' or 'linear'.
+    flag_gpu : bool
+        Flag to mark whether to use the gpu.
+    rectifier : str
+        Sets how the decoder output is rectified. Can be either
+        'clipped_relu' or 'sigmoid'.
+    '''
     def __init__(
         self,
         img_width=64,
@@ -369,6 +536,20 @@ class EncDec(chainer.Chain):
 
 
 def calc_fc_size(img_height, img_width):
+    '''Calculates shape of data after encoding.
+
+    Parameters
+    ----------
+    img_height : int
+        Height of input image.
+    img_width : int
+        Width of input image.
+
+    Returns
+    -------
+    encoded_shape : tuple(int)
+        Gives back 3-tuple with new dims.
+    '''
     height, width = img_height, img_width
     for _ in range(5):
         height, width = _get_conv_outsize(
@@ -380,6 +561,20 @@ def calc_fc_size(img_height, img_width):
 
 
 def calc_im_size(img_height, img_width):
+    '''Calculates shape of data after decoding.
+
+    Parameters
+    ----------
+    img_height : int
+        Height of encoded data.
+    img_width : int
+        Width of encoded data.
+
+    Returns
+    -------
+    encoded_shape : tuple(int)
+        Gives back 2-tuple with decoded image dimensions.
+    '''
     height, width = img_height, img_width
     for _ in range(5):
         height, width = _get_deconv_outsize((height, width),

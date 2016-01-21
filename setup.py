@@ -21,11 +21,12 @@ setup(
     url='https://github.com/stitchfix/fauxtograph',
     keywords=['unsupervised', 'images', 'deep learning', 'neural networks', 'Chainer'],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
     ],
     install_requires=[
         'chainer==1.6.0',
@@ -36,7 +37,7 @@ setup(
         'requests',
         'numpy',
         'click>=5.0',
-        'matplotlib'
+        'matplotlib',
     ],
     entry_points={
         'console_scripts': [

@@ -157,14 +157,14 @@ def generate(model_path, optimizer_path, meta_path, img_dir, number,
             os.makedirs(os.path.dirname(img_dir))
     variance = extremity
     vec = np.random.normal(mean, variance,
-                           (number, vae.latent_dim)).astype('float32')
+                           (number, vae.latent_width)).astype('float32')
 
-    reconstructed = vae.inverse_transform(vec) * 255.0
+    reconstructed = vae.inverse_transform(vec) * 255
 
     for i in range(number):
         im = reconstructed[i]
-        im = np.clip(image_multiplier*im/im.max(), 0, 255)
-        im = Image.fromarray(np.uint8(im))
+        im = np.clip(image_multiplier*im, 0, 255)
+        im = Image.fromarray(im.astype(np.uint8))
         fname = "{0}.{1}".format(i, format)
         path = os.path.join(img_dir, fname)
         im.save(path)
