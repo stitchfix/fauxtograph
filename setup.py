@@ -2,18 +2,24 @@ from setuptools import setup
 
 setup(
     name='fauxtograph',
-    version='0.1.7',
+    version='0.2.0',
     author='TJ Torres',
     author_email='ttorres@mit.edu',
     license='MIT',
-    description='Python module for building variational auto-encoder models trained on images.',
+    description='Python module for training unsupervised deep, generative models on images.',
     packages=['fauxtograph'],
-    long_description='Python module for building variational auto-encoder models trained on images. ' +
-                     'It uses Chainer for the Neural Network framework and implements the methods ' +
-                     'layed out in: Diederik P Kingma, Max Welling; "Auto-Encoding Variational Bayes"; ' +
-                     '(2013).',
+    long_description='Python module for training unsupervised deep, generative models on images. ' +
+                     'It uses Chainer for the Neural Network framework and implements several methods, ' +
+                     'including Variational Auto-encoders, Generative Adversarial Networks, and their ' +
+                     'combination. These methods are built with reference to personal notes and the following ' +
+                     'papers:\n'
+                     '1) Diederik P Kingma, Max Welling; "Auto-Encoding Variational Bayes"; (2013).\n' +
+                     '2) Alec Radford et. al.; "Unsupervised Representation Learning with Deep ' +
+                     'Convolutional Generative Adversarial Networks"; (2015).\n' +
+                     '3) Anders Boesen et. al.; "Autoencoding Beyond Pixels Using a Learned ' +
+                     'Similarity Metric"; (2015).',
     url='https://github.com/stitchfix/fauxtograph',
-    keywords=['autoencoder', 'images', 'deep learning', 'neural networks', 'Chainer'],
+    keywords=['unsupervised', 'images', 'deep learning', 'neural networks', 'Chainer'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -22,7 +28,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     install_requires=[
-        'chainer>=1.2.0',
+        'chainer=1.6.0',
         'pillow',
         'joblib',
         'tqdm',

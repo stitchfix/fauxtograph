@@ -1,3 +1,5 @@
 from . import fauxtograph
 
-ImageAutoEncoder = fauxtograph.ImageAutoEncoder
+VAE = fauxtograph.VAE
+GAN = fauxtograph.GAN
+VAEGAN = fauxtograph.VAEGAN

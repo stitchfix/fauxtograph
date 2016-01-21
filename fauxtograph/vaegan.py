@@ -363,9 +363,9 @@ class EncDec(chainer.Chain):
 
         return out, kl_loss, rec_loss
 
-    def __call__(self, x):
+    def __call__(self, x, test=False):
 
-        return self.forward(x)
+        return self.forward(x, test=test)
 
 
 def calc_fc_size(img_height, img_width):
