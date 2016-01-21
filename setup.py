@@ -28,14 +28,15 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     install_requires=[
-        'chainer=1.6.0',
+        'chainer==1.6.0',
         'pillow',
         'joblib',
         'tqdm',
         'BeautifulSoup',
         'requests',
         'numpy',
-        'click>=5.0'
+        'click>=5.0',
+        'matplotlib'
     ],
     entry_points={
         'console_scripts': [
