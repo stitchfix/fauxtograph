@@ -912,7 +912,8 @@ class GAN(object):
         serializers.load_hdf5(disc_opt, loaded_class.disc_opt)
 
         if meta['flag_gpu']:
-            loaded_class.model.to_gpu()
+            loaded_class.dec.to_gpu()
+            loaded_class.disc.to_gpu()
 
         return loaded_class
 
@@ -1547,7 +1548,9 @@ class VAEGAN(object):
         serializers.load_hdf5(disc_opt, loaded_class.disc_opt)
 
         if meta['flag_gpu']:
-            loaded_class.model.to_gpu()
+            loaded_class.enc.to_gpu()
+            loaded_class.dec.to_gpu()
+            loaded_class.disc.to_gpu()
 
         return loaded_class
 
