@@ -190,7 +190,7 @@ class Decoder(chainer.Chain):
             for i in range(n_layers):
                 batch = F.relu(getattr(self, 'linear_%i' % i)(batch))
             batch = F.relu(getattr(self, 'linear_%i' % n_layers)(batch))
-            batch = F.reshape(batch, (-1, self.color_channels, self.img_height, self.img_width))
+            batch = F.reshape(batch, (-1,self.img_height, self.img_width, self.color_channels))
         if rectifier == 'clipped_relu':
             batch = F.clipped_relu(batch, z=1.0)
         elif rectifier == 'sigmoid':
