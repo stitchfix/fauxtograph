@@ -159,7 +159,7 @@ def generate(model_path, optimizer_path, meta_path, img_dir, number,
     vec = np.random.normal(mean, variance,
                            (number, vae.latent_width)).astype('float32')
 
-    reconstructed = vae.inverse_transform(vec) * 255
+    reconstructed = vae.inverse_transform(vec, test=True) * 255
 
     for i in range(number):
         im = reconstructed[i]
