@@ -70,9 +70,17 @@ def download(filedir):
 
     image_resize(filepaths, filedir, 96, 96)
 
+def pathcheck(image_path):
+  if not image_path[-1] == '/':
+      image_path += '/'
+  if not os.path.exists(os.path.dirname(image_path)):
+          os.makedirs(os.path.dirname(image_path))
+  return image_path
 
 @click.command(help='Train a Variational Auto-encoder')
 @click.argument('image_path', type=click.Path(resolve_path=False,
+                                              file_okay=False, dir_okay=True))
+@click.argument('validation_image_path', type=click.Path(resolve_path=False,
                                               file_okay=False, dir_okay=True))
 @click.argument('model_path', type=click.Path(resolve_path=False,
                                               file_okay=True, dir_okay=False))
@@ -93,12 +101,12 @@ def download(filedir):
               help="Ratio of KL divergence term to reconstruction loss term.")
 @click.option('--mode', default='linear', type=click.Choice(['linear', 'convolution']),
               help="Chose from fully-connected linear or convolutional architectures.")
-def train(image_path, model_path, gpu, latent_width, color_channels, batch,
-          epoch, shape, kl_ratio, mode):
-    if not image_path[-1] == '/':
-        image_path += '/'
-    if not os.path.exists(os.path.dirname(image_path)):
-            os.makedirs(os.path.dirname(image_path))
+@click.option('--save_freq', default=100, type=int,
+              help="Frequency to save model.")
+def train(image_path, validation_image_path, model_path, gpu, latent_width, color_channels, batch,
+          epoch, shape, kl_ratio, save_freq, mode):
+    image_path = pathcheck(image_path)
+    validation_image_path = pathcheck(validation_image_path)
     if model_path[-1] == '/':
         click.echo("Model Path should be a file path not a directory path. "
                    "Removing trailing '/' ...")
@@ -107,6 +115,11 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch,
     file_paths = [os.path.join(image_path, f)
                   for f in os.listdir(image_path)
                   if os.path.isfile(os.path.join(image_path, f))
+                  and not f.startswith('.')]
+
+    validation_file_paths = [os.path.join(validation_image_path, f)
+                  for f in os.listdir(validation_image_path)
+                  if os.path.isfile(os.path.join(validation_image_path, f))
                   and not f.startswith('.')]
 
     vae = VAE(img_width=shape[0],
@@ -120,7 +133,8 @@ def train(image_path, model_path, gpu, latent_width, color_channels, batch,
               mode=mode)
 
     x_all = vae.load_images(file_paths)
-    vae.fit(x_all, batch_size=batch, n_epochs=epoch)
+    x_validation = vae.load_images(validation_file_paths)
+    vae.fit(x_all, validation_img_data=x_validation, save_freq=save_freq, batch_size=batch, n_epochs=epoch)
     directory = os.path.dirname(model_path)
     name = os.path.basename(model_path)
     vae.save(directory, name)
