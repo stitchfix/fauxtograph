@@ -58,7 +58,7 @@ $ fauxtograph download ./images
 
 Then you can train a model and output it to disk with 
 ```bash
-$ fauxtograph train ./images ./models/model_name 
+$ fauxtograph train --kl_ratio 0.005 ./images ./models/model_name 
 ```
 
 Finally, you can generate new images based on your trained model with
