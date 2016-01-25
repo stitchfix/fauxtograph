@@ -493,11 +493,13 @@ class EncDec(chainer.Chain):
         super(EncDec, self).__init__(
             enc=Encoder(img_width=img_width,
                         img_height=img_height,
+                        color_channels=color_channels,
                         encode_layers=encode_layers,
                         latent_width=latent_width,
                         mode=mode),
             dec=Decoder(img_width=img_width,
                         img_height=img_height,
+                        color_channels=color_channels,
                         decode_layers=decode_layers,
                         latent_width=latent_width,
                         mode=mode)
