@@ -245,7 +245,8 @@ class VAE(object):
 
     def fit(
         self,
-        img_data,
+        train_img_data,
+        validation_img_data=None,
         save_freq=-1,
         pic_freq=-1,
 
@@ -262,8 +263,9 @@ class VAE(object):
         Parameters
         ----------
 
-        img_data : array-like shape (n_images, n_colors, image_width, image_height)
+        train_img_data : array-like shape (n_images, n_colors, image_width, image_height)
             Images used to fit VAE model.
+        validation_img_data : optional validation data
         save_freq [optional] : int
             Sets the number of epochs to wait before saving the model and optimizer states.
             Also saves image files of randomly generated images using those states in a
@@ -295,45 +297,62 @@ class VAE(object):
         if weight_decay:
             self.opt.add_hook(chainer.optimizer.WeightDecay(0.00001))
 
-        n_data = img_data.shape[0]
-
-        batch_iter = list(range(0, n_data, batch_size))
-        n_batches = len(batch_iter)
         save_counter = 0
         for epoch in range(1, n_epochs + 1):
-            print('epoch: %i' % epoch)
-            t1 = time.time()
-            indexes = np.random.permutation(n_data)
-            last_loss_kl = 0.
-            last_loss_rec = 0.
-            count = 0
-            for i in tqdm.tqdm(batch_iter):
+            print('epoch: {:d}'.format(epoch))
+            for phase in ["train", "validation"]:
+                if(phase == "train"):
+                    source_data = train_img_data
+                else:
+                    source_data = validation_img_data
 
-                x_batch = Variable(img_data[indexes[i: i + batch_size]])
+                n_data = source_data.shape[0]
+                batch_iter = list(range(0, n_data, batch_size))
+                n_batches = len(batch_iter)
 
-                if self.flag_gpu:
-                    x_batch.to_gpu()
+                t1 = time.time()
+                indexes = np.random.permutation(n_data)
+                last_loss_kl = 0.
+                last_loss_rec = 0.
+                last_loss_total = 0.
+                count = 0
+                for i in tqdm.tqdm(batch_iter):
 
-                out, kl_loss, rec_loss = self.model.forward(x_batch)
-                total_loss = rec_loss + kl_loss*self.kl_ratio
+                    x_batch = Variable(source_data[indexes[i: i + batch_size]])
 
-                self.opt.zero_grads()
-                total_loss.backward()
-                self.opt.update()
+                    if self.flag_gpu:
+                        x_batch.to_gpu()
 
-                last_loss_kl += kl_loss.data
-                last_loss_rec += rec_loss.data
-                plot_pics = Variable(img_data[indexes[:width]])
-                count += 1
-                if pic_freq > 0:
-                    assert type(pic_freq) == int, "pic_freq must be an integer."
-                    if count % pic_freq == 0:
-                        fig = self._plot_img(
-                            plot_pics,
-                            img_path=img_path,
-                            epoch=epoch
-                        )
-                        display(fig)
+                    out, kl_loss, rec_loss = self.model.forward(x_batch)
+                    total_loss = rec_loss + kl_loss*self.kl_ratio
+
+                    if(phase == "train"):
+                        self.opt.zero_grads()
+                        total_loss.backward()
+                        self.opt.update()
+                        plot_pics = Variable(source_data[indexes[:width]])
+
+                    last_loss_kl += kl_loss.data
+                    last_loss_rec += rec_loss.data
+                    last_loss_total += total_loss.data
+                    count += 1
+                    if pic_freq > 0:
+                        assert type(pic_freq) == int, "pic_freq must be an integer."
+                        if count % pic_freq == 0:
+                            fig = self._plot_img(
+                                plot_pics,
+                                img_path=img_path,
+                                epoch=epoch
+                            )
+                            display(fig)
+
+                # print(phase, last_loss_total/n_batches, last_loss_rec/n_batches, last_loss_kl/n_batches)
+                # msg = "{0}_total_loss={1:9.4f}, {0}_rec_loss = {2:9.4f}, {0}_kl_loss = {3:9.4f}"
+                msg = "{0}_total_loss={1}, {0}_rec_loss = {2}, {0}_kl_loss = {3}"
+                print(msg.format(phase, last_loss_total/n_batches, last_loss_rec/n_batches, last_loss_kl/n_batches))
+                # t_diff = time.time()-t1
+                # print("time: %f\n\n" % t_diff)
+
 
             if save_freq > 0:
                 save_counter += 1
@@ -353,11 +372,6 @@ class VAE(object):
                         save=True
                         )
 
-            msg = "rec_loss = {0} , kl_loss = {1}"
-            print(msg.format(last_loss_rec/n_batches, last_loss_kl/n_batches))
-            t_diff = time.time()-t1
-            print("time: %f\n\n" % t_diff)
-
     def _plot_img(self, data, img_path='./', epoch=1, batch=1, save=False):
 
         if data.data.shape[0] < 10:
@@ -372,8 +386,10 @@ class VAE(object):
         x.to_cpu()
         fig = plt.figure(figsize=(16.0, 3.0))
 
-        orig = x.data.transpose(0, 2, 3, 1)
-        rec = rec.data.transpose(0, 2, 3, 1)
+        # orig = x.data.transpose(0, 2, 3, 1)
+        # rec = rec.data.transpose(0, 2, 3, 1)
+        orig = x.data
+        rec = rec.data
 
         for i in range(width):
             plt.subplot(2, width, i+1)
