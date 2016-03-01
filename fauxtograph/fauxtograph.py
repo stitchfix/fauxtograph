@@ -1451,19 +1451,19 @@ class VAEGAN(object):
 
         for i in range(width):
             plt.subplot(4, width, i+1)
-            plt.imshow(z[i])
+            plt.imshow(z[i].squeeze())
             plt.axis("off")
         for i in range(width):
             plt.subplot(4, width, width+i+1)
-            plt.imshow(z_rec[i])
+            plt.imshow(z_rec[i].squeeze())
             plt.axis("off")
         for i in range(width):
             plt.subplot(4, width, 2*width+i+1)
-            plt.imshow(x_pics[i])
+            plt.imshow(x_pics[i].squeeze())
             plt.axis("off")
         for i in range(width):
             plt.subplot(4, width, 3*width+i+1)
-            plt.imshow(y_pics[i])
+            plt.imshow(y_pics[i].squeeze())
             plt.axis("off")
         if save_pic:
             if img_path[-1] != '/':
