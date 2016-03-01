@@ -238,6 +238,8 @@ class VAE(object):
             return im/255.
         x_all = np.array([read(fname) for fname in tqdm.tqdm(filepaths)])
         x_all = x_all.astype('float32')
+        if len(x_all.shape)<4: # for grayscale images
+            x_all = x_all.reshape(list(x_all.shape)+[1])
         if self.mode == 'convolution':
             x_all = x_all.transpose(0, 3, 1, 2)
         print("Image Files Loaded!")
@@ -659,6 +661,8 @@ class GAN(object):
             return im/255.
         x_all = np.array([read(fname) for fname in tqdm.tqdm(filepaths)])
         x_all = x_all.astype('float32')
+        if len(x_all.shape)<4: # for grayscale images
+            x_all = x_all.reshape(list(x_all.shape)+[1])
         if self.mode == 'convolution':
             x_all = x_all.transpose(0, 3, 1, 2)
         print("Image Files Loaded!")
@@ -1235,6 +1239,8 @@ class VAEGAN(object):
             return im/255.
         x_all = np.array([read(fname) for fname in tqdm.tqdm(filepaths)])
         x_all = x_all.astype('float32')
+        if len(x_all.shape)<4: # for grayscale images
+            x_all = x_all.reshape(list(x_all.shape)+[1])
         if self.mode == 'convolution':
             x_all = x_all.transpose(0, 3, 1, 2)
         print("Image Files Loaded!")
@@ -1445,19 +1451,19 @@ class VAEGAN(object):
 
         for i in range(width):
             plt.subplot(4, width, i+1)
-            plt.imshow(z[i])
+            plt.imshow(z[i].squeeze())
             plt.axis("off")
         for i in range(width):
             plt.subplot(4, width, width+i+1)
-            plt.imshow(z_rec[i])
+            plt.imshow(z_rec[i].squeeze())
             plt.axis("off")
         for i in range(width):
             plt.subplot(4, width, 2*width+i+1)
-            plt.imshow(x_pics[i])
+            plt.imshow(x_pics[i].squeeze())
             plt.axis("off")
         for i in range(width):
             plt.subplot(4, width, 3*width+i+1)
-            plt.imshow(y_pics[i])
+            plt.imshow(y_pics[i].squeeze())
             plt.axis("off")
         if save_pic:
             if img_path[-1] != '/':
@@ -1587,7 +1593,7 @@ def get_paths(directory):
     return fnames
 
 
-def image_resize(file_paths, new_dir, width, height):
+def image_resize(file_paths, new_dir, width, height, color = True):
     '''Resizes all images with given paths to new dimensions.
         Uses up/downscaling with antialiasing.
 
@@ -1609,6 +1615,8 @@ def image_resize(file_paths, new_dir, width, height):
         os.makedirs(os.path.dirname(new_dir))
 
     for f in tqdm.tqdm(file_paths):
-        img = Image.open(f).resize((width, height), Image.ANTIALIAS).convert('RGB')
+        img = Image.open(f).resize((width, height), Image.ANTIALIAS)
+        if color: img = img.convert('RGB')
+        else: img = img.convert('L')
         new = os.path.join(new_dir, os.path.basename(f))
         img.save(new)
