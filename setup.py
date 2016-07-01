@@ -38,6 +38,7 @@ setup(
         'numpy',
         'click>=5.0',
         'matplotlib',
+        'jupyter',
     ],
     entry_points={
         'console_scripts': [

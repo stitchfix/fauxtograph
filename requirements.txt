@@ -3,7 +3,6 @@ beautifulsoup4==4.4.1
 chainer==1.6.0
 click==5.1
 decorator==4.0.2
-fauxtograph==0.2.0
 funcsigs==0.4
 gnureadline==6.3.3
 ipython==4.0.0
