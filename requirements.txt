@@ -1,5 +1,5 @@
 appnope==0.1.0
-BeautifulSoup==3.2.1
+beautifulsoup4==4.4.1
 chainer==1.6.0
 click==5.1
 decorator==4.0.2

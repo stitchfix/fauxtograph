@@ -33,7 +33,7 @@ setup(
         'pillow',
         'joblib',
         'tqdm',
-        'BeautifulSoup',
+        'beautifulsoup4',
         'requests',
         'numpy',
         'click>=5.0',

@@ -1,6 +1,6 @@
 import click
 from fauxtograph import VAE, image_resize, get_paths
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 import requests as r
 import os
 import numpy as np
