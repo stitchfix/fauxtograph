@@ -49,7 +49,7 @@ def download_page(filepath, url, pic_type, page):
             img = img_data.content
             numb_str = '{0}{1}_{2}.jpg'.format(pic_type, page, i)
             path = os.path.join(filepath, numb_str)
-            with open(path, 'w') as f:
+            with open(path, 'wb') as f:
                 f.write(img)
 
 

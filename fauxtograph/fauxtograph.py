@@ -1,16 +1,19 @@
+from __future__ import absolute_import  # For Python 2/3 compatibility
+
 from PIL import Image
 import chainer.functions as F
 from chainer import Variable
 import chainer.optimizers as O
 from chainer import serializers
 import matplotlib.pyplot as plt
-from vaegan import *
+from .vaegan import *
 import tqdm
 import time
 import numpy as np
 import os
 from IPython.display import display
 import json
+from functools import reduce
 
 
 class VAE(object):
@@ -118,7 +121,7 @@ class VAE(object):
         d.pop('opt')
         # d.pop('xp')
         meta = json.dumps(d)
-        with open(filepath+'.json', 'wb') as f:
+        with open(filepath+'.json', 'w') as f:
             f.write(meta)
 
     def transform(self, data, test=False):
