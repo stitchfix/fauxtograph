@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='fauxtograph',
-    version='1.0.3',
+    version='1.0.4',
     author='TJ Torres',
     author_email='ttorres@mit.edu',
     license='MIT',
@@ -33,11 +33,12 @@ setup(
         'pillow',
         'joblib',
         'tqdm',
-        'BeautifulSoup',
+        'beautifulsoup4',
         'requests',
         'numpy',
         'click>=5.0',
         'matplotlib',
+        'jupyter',
     ],
     entry_points={
         'console_scripts': [

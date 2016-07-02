@@ -1,6 +1,6 @@
 import click
 from fauxtograph import VAE, image_resize, get_paths
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 import requests as r
 import os
 import numpy as np
@@ -49,7 +49,7 @@ def download_page(filepath, url, pic_type, page):
             img = img_data.content
             numb_str = '{0}{1}_{2}.jpg'.format(pic_type, page, i)
             path = os.path.join(filepath, numb_str)
-            with open(path, 'w') as f:
+            with open(path, 'wb') as f:
                 f.write(img)
 
 

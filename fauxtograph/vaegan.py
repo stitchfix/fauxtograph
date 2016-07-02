@@ -3,6 +3,7 @@ import chainer.links as L
 from chainer import Variable
 import chainer
 import numpy as np
+from functools import reduce
 
 
 class Encoder(chainer.Chain):
