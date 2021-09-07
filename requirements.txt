@@ -17,7 +17,7 @@ path.py==8.1.1
 pbr==1.7.0
 pexpect==3.3
 pickleshare==0.5
-Pillow==2.9.0
+Pillow==8.3.2
 protobuf==2.6.1
 pyparsing==2.0.3
 python-dateutil==2.4.2
