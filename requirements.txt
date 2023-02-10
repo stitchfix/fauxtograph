@@ -6,7 +6,7 @@ decorator==4.0.2
 fauxtograph==0.2.0
 funcsigs==0.4
 gnureadline==6.3.3
-ipython==4.0.0
+ipython==8.10.0
 ipython-genutils==0.1.0
 joblib==0.8.4
 matplotlib==1.4.3
